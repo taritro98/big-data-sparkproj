@@ -21,8 +21,10 @@ import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.studentfunctions.NewsArticleDPHProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsPreprocessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.QueryTermAccumulatorFunction;
+import uk.ac.gla.dcs.bigdata.studentstructures.NewsArticleDPHScore;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsArticleProcessed;
 
 /**
@@ -139,6 +141,11 @@ public class AssessedExercise {
 		for (java.util.Map.Entry<String, LongAccumulator> entry : queryTermFreqAccumulatorMap.entrySet()) {
 			queryTermCountsComputed.put(entry.getKey(),Math.toIntExact(entry.getValue().value()));
 		}
+		
+		// Spark transformation 2 - FlatMap function to calculate average DPH score per query for each document 
+		NewsArticleDPHProcessor newsDPHScore = new NewsArticleDPHProcessor(query, totalDocumentLengthComputed, totalDocs, queryTermCountsComputed);
+		Dataset<NewsArticleDPHScore> newsArticleDPH = newsArticleProcessed.flatMap(newsDPHScore, Encoders.bean(NewsArticleDPHScore.class)); 
+
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}

@@ -50,7 +50,7 @@ public class AssessedExercise {
 		// The code submitted for the assessed exerise may be run in either local or remote modes
 		// Configuration of this will be performed based on an environment variable
 		String sparkMasterDef = System.getenv("spark.master");
-		if (sparkMasterDef==null) sparkMasterDef = "local[2]"; // default is local mode with two executors
+		if (sparkMasterDef==null) sparkMasterDef = "local[4]"; // default is local mode with two executors
 		
 		String sparkSessionName = "BigDataAE"; // give the session a name
 		
@@ -72,8 +72,9 @@ public class AssessedExercise {
 		
 		// Get the location of the input news articles
 		String newsFile = System.getenv("bigdata.news");
-		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
-		
+		//if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
+		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
+
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
 		
@@ -160,7 +161,7 @@ public class AssessedExercise {
 		//Spark action to fetch the top 10 ranked documents
 		List<DocumentRanking> docRankingList = newsArticleDPHResult.collectAsList();
 		
-		System.out.println("Doc Ranking -> "+docRankingList);
+		//System.out.println("Doc Ranking -> "+docRankingList);
 		return docRankingList; // replace this with the the list of DocumentRanking output by your topology
 	}
 	

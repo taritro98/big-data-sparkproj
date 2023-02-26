@@ -24,6 +24,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsArticleDPHProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsPreprocessor;
+import uk.ac.gla.dcs.bigdata.studentfunctions.QueryGroupsRanking;
 import uk.ac.gla.dcs.bigdata.studentfunctions.QueryKeyFunction;
 import uk.ac.gla.dcs.bigdata.studentfunctions.QueryTermAccumulatorFunction;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsArticleDPHScore;
@@ -151,9 +152,16 @@ public class AssessedExercise {
 		// Grouping function to group NewsArticleDPHScore custom objects by query
 		QueryKeyFunction queryKey = new QueryKeyFunction();
 		KeyValueGroupedDataset<Query, NewsArticleDPHScore> queryGrouped = newsArticleDPH.groupByKey(queryKey, Encoders.bean(Query.class));
-
 		
-		return null; // replace this with the the list of DocumentRanking output by your topology
+		// Spark transformation 3 - FlatMap groups function to sort documents by descending order, filter out similar documents and fetch top 10 ranked documents per query
+		QueryGroupsRanking queryGroupRanking = new QueryGroupsRanking();
+		Dataset<DocumentRanking> newsArticleDPHResult = queryGrouped.flatMapGroups(queryGroupRanking, Encoders.bean(DocumentRanking.class));
+		
+		//Spark action to fetch the top 10 ranked documents
+		List<DocumentRanking> docRankingList = newsArticleDPHResult.collectAsList();
+		
+		System.out.println("Doc Ranking -> "+docRankingList);
+		return docRankingList; // replace this with the the list of DocumentRanking output by your topology
 	}
 	
 	

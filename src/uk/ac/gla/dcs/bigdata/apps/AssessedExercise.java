@@ -4,6 +4,8 @@ import static org.apache.spark.sql.functions.col;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
@@ -18,6 +20,9 @@ import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.studentfunctions.NewsPreprocessor;
+import uk.ac.gla.dcs.bigdata.studentfunctions.QueryTermAccumulatorFunction;
+import uk.ac.gla.dcs.bigdata.studentstructures.NewsArticleProcessed;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -114,6 +119,17 @@ public class AssessedExercise {
 		LongAccumulator totalDocumentLength = spark.sparkContext().longAccumulator();
 		LongAccumulator totalCorpusDocuments = spark.sparkContext().longAccumulator();
 		Long totalDocs = filteredData.count();
+		
+		// HashMap accumulator for defining and calculating query-term wise frequency in corpus
+		QueryTermAccumulatorFunction queryTermFreqFunc = new QueryTermAccumulatorFunction(query, spark);
+		Map<String, LongAccumulator> queryTermFreqAccumulatorMap = queryTermFreqFunc.getAccumulatorMap();
+		
+		// Spark transformation 1 - Map function for processing (tokenizing, stemming) news articles and precomputing DPH score parameters
+		NewsPreprocessor newsArticle = new NewsPreprocessor(totalDocumentLength, totalCorpusDocuments, query, queryTermFreqAccumulatorMap);
+		Dataset<NewsArticleProcessed> newsArticleProcessed = filteredData.map(newsArticle, Encoders.bean(NewsArticleProcessed.class)); // this converts each row into a NewsArticle
+		
+		// Spark action for executing transformation function and obtaining DPH score parameters
+		newsArticleProcessed.count();
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}

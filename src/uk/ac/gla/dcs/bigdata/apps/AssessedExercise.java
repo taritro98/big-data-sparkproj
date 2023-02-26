@@ -3,6 +3,7 @@ package uk.ac.gla.dcs.bigdata.apps;
 import static org.apache.spark.sql.functions.col;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -130,6 +131,14 @@ public class AssessedExercise {
 		
 		// Spark action for executing transformation function and obtaining DPH score parameters
 		newsArticleProcessed.count();
+		
+		// Obtains query term-wise frequency and total document length from accumulators
+		Map<String, Integer> queryTermCountsComputed = new HashMap<>();
+		Integer totalDocumentLengthComputed = totalDocumentLength.value().intValue();
+
+		for (java.util.Map.Entry<String, LongAccumulator> entry : queryTermFreqAccumulatorMap.entrySet()) {
+			queryTermCountsComputed.put(entry.getKey(),Math.toIntExact(entry.getValue().value()));
+		}
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}

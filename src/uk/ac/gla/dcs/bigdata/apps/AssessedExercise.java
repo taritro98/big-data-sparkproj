@@ -1,12 +1,17 @@
 package uk.ac.gla.dcs.bigdata.apps;
 
+import static org.apache.spark.sql.functions.col;
+
 import java.io.File;
 import java.util.List;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.util.LongAccumulator;
 
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
@@ -99,6 +104,16 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 		
+		// Broadcasted list of Query objects
+		Broadcast<List<Query>> query = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queries.collectAsList());
+		
+		// Filtering news articles for null values in id, title, contents and subtype columns
+		Dataset<NewsArticle> filteredData = news.filter(col("id").isNotNull().and(col("title").isNotNull().and(col("contents").isNotNull().and(col("contents.subtype").isNotNull().and(col("contents.content").isNotNull())))));
+		
+		// Declaring accumulators to compute parameters for DPH score
+		LongAccumulator totalDocumentLength = spark.sparkContext().longAccumulator();
+		LongAccumulator totalCorpusDocuments = spark.sparkContext().longAccumulator();
+		Long totalDocs = filteredData.count();
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}

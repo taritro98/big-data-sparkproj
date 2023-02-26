@@ -12,6 +12,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.KeyValueGroupedDataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.util.LongAccumulator;
@@ -23,6 +24,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsArticleDPHProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsPreprocessor;
+import uk.ac.gla.dcs.bigdata.studentfunctions.QueryKeyFunction;
 import uk.ac.gla.dcs.bigdata.studentfunctions.QueryTermAccumulatorFunction;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsArticleDPHScore;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsArticleProcessed;
@@ -145,6 +147,10 @@ public class AssessedExercise {
 		// Spark transformation 2 - FlatMap function to calculate average DPH score per query for each document 
 		NewsArticleDPHProcessor newsDPHScore = new NewsArticleDPHProcessor(query, totalDocumentLengthComputed, totalDocs, queryTermCountsComputed);
 		Dataset<NewsArticleDPHScore> newsArticleDPH = newsArticleProcessed.flatMap(newsDPHScore, Encoders.bean(NewsArticleDPHScore.class)); 
+
+		// Grouping function to group NewsArticleDPHScore custom objects by query
+		QueryKeyFunction queryKey = new QueryKeyFunction();
+		KeyValueGroupedDataset<Query, NewsArticleDPHScore> queryGrouped = newsArticleDPH.groupByKey(queryKey, Encoders.bean(Query.class));
 
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
